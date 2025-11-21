@@ -15,6 +15,11 @@ $region = getenv('AWS_REGION') ?: 'us-east-1';
 
 // Get the sleep duration from environment variable or default to 12 hours (43200 seconds)
 $sleepDuration = getenv('SLEEP_DURATION') ?: 43200;
+// Validate sleep duration is a non-negative integer
+$sleepDuration = filter_var($sleepDuration, FILTER_VALIDATE_INT);
+if ($sleepDuration === false || $sleepDuration < 0) {
+    $sleepDuration = 43200; // Reset to default if invalid
+}
 
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
@@ -103,6 +108,10 @@ if (!empty($instanceName) && $diskFree !== false) {
 }
 
 // Sleep after reporting
-echo "Sleeping for " . $sleepDuration . " seconds...\n";
-sleep($sleepDuration);
-echo "Sleep completed, exiting.\n";
+if ($sleepDuration > 0) {
+    echo "Sleeping for " . $sleepDuration . " seconds...\n";
+    sleep($sleepDuration);
+    echo "Sleep completed, exiting.\n";
+} else {
+    echo "Sleep duration is 0, exiting immediately.\n";
+}
