@@ -13,6 +13,9 @@ $diskFree = disk_free_space("/") / 1024 / 1024 / 1024; // in GB
 // Get the region from environment variable or default to us-east-1
 $region = getenv('AWS_REGION') ?: 'us-east-1';
 
+// Get the sleep duration from environment variable or default to 12 hours (43200 seconds)
+$sleepDuration = getenv('SLEEP_DURATION') ?: 43200;
+
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
 $instanceId = @file_get_contents('http://169.254.169.254/latest/meta-data/instance-id');
@@ -98,3 +101,8 @@ if (!empty($instanceName) && $diskFree !== false) {
     }
     echo implode(", ", $reasons) . ", skipping CloudWatch metric\n";
 }
+
+// Sleep after reporting
+echo "Sleeping for " . $sleepDuration . " seconds...\n";
+sleep($sleepDuration);
+echo "Sleep completed, exiting.\n";
