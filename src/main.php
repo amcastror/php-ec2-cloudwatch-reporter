@@ -10,14 +10,15 @@ use Aws\Exception\AwsException;
 // Gather disk free space
 $diskFree = disk_free_space("/");
 
+// Get the region from environment variable or default to us-east-1
+$region = getenv('AWS_REGION') ?: 'us-east-1';
+
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
 $instanceId = @file_get_contents('http://169.254.169.254/latest/meta-data/instance-id');
 $instanceName = null;
 
 if ($instanceId !== false) {
-    // Get the region from environment variable or default to us-east-1
-    $region = getenv('AWS_REGION') ?: 'us-east-1';
     
     try {
         // Create EC2 client (credentials provided by IAM instance role)
@@ -58,17 +59,11 @@ echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 // Report to CloudWatch metrics
 if ($instanceName !== null) {
     try {
-        // Get the region from environment variable or default to us-east-1
-        $region = getenv('AWS_REGION') ?: 'us-east-1';
-        
         // Create CloudWatch client
         $cloudWatchClient = new CloudWatchClient([
             'version' => 'latest',
             'region' => $region
         ]);
-        
-        // Convert disk free space to bytes for the metric
-        $diskFreeBytes = $diskFree;
         
         // Send metric to CloudWatch
         $cloudWatchClient->putMetricData([
@@ -76,15 +71,14 @@ if ($instanceName !== null) {
             'MetricData' => [
                 [
                     'MetricName' => 'DiskFreeSpace',
-                    'Value' => $diskFreeBytes,
+                    'Value' => $diskFree,
                     'Unit' => 'Bytes',
                     'Dimensions' => [
                         [
                             'Name' => 'InstanceName',
                             'Value' => $instanceName
                         ]
-                    ],
-                    'Timestamp' => time()
+                    ]
                 ]
             ]
         ]);
