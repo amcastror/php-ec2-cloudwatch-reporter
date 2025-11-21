@@ -57,7 +57,7 @@ echo "EC2 Instance ID: " . ($instanceId ?: 'N/A') . "\n";
 echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 
 // Report to CloudWatch metrics
-if (!empty($instanceName)) {
+if (!empty($instanceName) && $diskFree !== false) {
     try {
         // Create CloudWatch client
         $cloudWatchClient = new CloudWatchClient([
@@ -89,5 +89,9 @@ if (!empty($instanceName)) {
         echo "Failed to send metric to CloudWatch\n";
     }
 } else {
-    echo "Instance name not found, skipping CloudWatch metric\n";
+    if (empty($instanceName)) {
+        echo "Instance name not found, skipping CloudWatch metric\n";
+    } else {
+        echo "Unable to get disk free space, skipping CloudWatch metric\n";
+    }
 }
