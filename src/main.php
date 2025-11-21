@@ -91,7 +91,8 @@ if (!empty($instanceName) && $diskFree !== false) {
 } else {
     if (empty($instanceName)) {
         echo "Instance name not found, skipping CloudWatch metric\n";
-    } else {
+    }
+    if ($diskFree === false) {
         echo "Unable to get disk free space, skipping CloudWatch metric\n";
     }
 }
