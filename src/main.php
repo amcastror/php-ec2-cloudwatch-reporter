@@ -3,6 +3,9 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use Aws\Ec2\Ec2Client;
+use Aws\Exception\AwsException;
+
 // Gather disk free space
 $diskFree = disk_free_space("/");
 
@@ -10,9 +13,41 @@ $diskFree = disk_free_space("/");
 // Metadata endpoint available in EC2 only
 $instanceId = @file_get_contents('http://169.254.169.254/latest/meta-data/instance-id');
 $instanceName = null;
+
 if ($instanceId !== false) {
-    $url = 'http://169.254.169.254/latest/meta-data/tags/instance/Name';
-    $instanceName = @file_get_contents($url);
+    // Get the region from environment variable or default to us-east-1
+    $region = getenv('AWS_REGION') ?: 'us-east-1';
+    
+    try {
+        // Create EC2 client (credentials provided by IAM instance role)
+        $ec2Client = new Ec2Client([
+            'version' => 'latest',
+            'region' => $region
+        ]);
+        
+        // Describe the instance to get tags
+        $result = $ec2Client->describeInstances([
+            'InstanceIds' => [$instanceId]
+        ]);
+        
+        // Extract the Name tag from the instance
+        $reservations = $result->get('Reservations');
+        if (!empty($reservations)) {
+            $instances = $reservations[0]['Instances'];
+            if (!empty($instances)) {
+                $tags = $instances[0]['Tags'] ?? [];
+                foreach ($tags as $tag) {
+                    if ($tag['Key'] === 'Name') {
+                        $instanceName = $tag['Value'];
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (AwsException $e) {
+        // If AWS SDK fails, instance name remains null
+        error_log("Failed to describe instance: " . $e->getMessage());
+    }
 }
 
 echo "Disk free: " . ($diskFree / 1024 / 1024 / 1024) . " GB\n";
