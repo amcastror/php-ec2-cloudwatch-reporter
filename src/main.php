@@ -4,7 +4,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 // Gather disk free space
-diskFree = disk_free_space("/");
+$diskFree = disk_free_space("/");
 
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
