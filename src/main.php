@@ -57,7 +57,7 @@ echo "EC2 Instance ID: " . ($instanceId ?: 'N/A') . "\n";
 echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 
 // Report to CloudWatch metrics
-if ($instanceName !== null) {
+if (!empty($instanceName)) {
     try {
         // Create CloudWatch client
         $cloudWatchClient = new CloudWatchClient([
@@ -89,5 +89,5 @@ if ($instanceName !== null) {
         echo "Failed to send metric to CloudWatch\n";
     }
 } else {
-    echo "Instance name not available, skipping CloudWatch metric\n";
+    echo "Instance name not found, skipping CloudWatch metric\n";
 }
