@@ -4,10 +4,14 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use Aws\Ec2\Ec2Client;
+use Aws\CloudWatch\CloudWatchClient;
 use Aws\Exception\AwsException;
 
 // Gather disk free space
 $diskFree = disk_free_space("/");
+
+// Get the region from environment variable or default to us-east-1
+$region = getenv('AWS_REGION') ?: 'us-east-1';
 
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
@@ -15,8 +19,6 @@ $instanceId = @file_get_contents('http://169.254.169.254/latest/meta-data/instan
 $instanceName = null;
 
 if ($instanceId !== false) {
-    // Get the region from environment variable or default to us-east-1
-    $region = getenv('AWS_REGION') ?: 'us-east-1';
     
     try {
         // Create EC2 client (credentials provided by IAM instance role)
@@ -54,5 +56,45 @@ echo "Disk free: " . ($diskFree / 1024 / 1024 / 1024) . " GB\n";
 echo "EC2 Instance ID: " . ($instanceId ?: 'N/A') . "\n";
 echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 
-// Placeholder for reporting to CloudWatch
-// See https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/sending-cloudwatch-metrics.html
+// Report to CloudWatch metrics
+if (!empty($instanceName) && $diskFree !== false) {
+    try {
+        // Create CloudWatch client
+        $cloudWatchClient = new CloudWatchClient([
+            'version' => 'latest',
+            'region' => $region
+        ]);
+        
+        // Send metric to CloudWatch
+        $cloudWatchClient->putMetricData([
+            'Namespace' => 'System/Linux',
+            'MetricData' => [
+                [
+                    'MetricName' => 'DiskFreeSpace',
+                    'Value' => $diskFree,
+                    'Unit' => 'Bytes',
+                    'Dimensions' => [
+                        [
+                            'Name' => 'InstanceName',
+                            'Value' => $instanceName
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+        
+        echo "Metric sent to CloudWatch successfully\n";
+    } catch (AwsException $e) {
+        error_log("Failed to send metric to CloudWatch: " . $e->getMessage());
+        echo "Failed to send metric to CloudWatch\n";
+    }
+} else {
+    $reasons = [];
+    if (empty($instanceName)) {
+        $reasons[] = "Instance name not found";
+    }
+    if ($diskFree === false) {
+        $reasons[] = "Unable to get disk free space";
+    }
+    echo implode(", ", $reasons) . ", skipping CloudWatch metric\n";
+}
