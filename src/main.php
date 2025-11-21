@@ -89,10 +89,12 @@ if (!empty($instanceName) && $diskFree !== false) {
         echo "Failed to send metric to CloudWatch\n";
     }
 } else {
+    $reasons = [];
     if (empty($instanceName)) {
-        echo "Instance name not found, skipping CloudWatch metric\n";
+        $reasons[] = "Instance name not found";
     }
     if ($diskFree === false) {
-        echo "Unable to get disk free space, skipping CloudWatch metric\n";
+        $reasons[] = "Unable to get disk free space";
     }
+    echo implode(", ", $reasons) . ", skipping CloudWatch metric\n";
 }
