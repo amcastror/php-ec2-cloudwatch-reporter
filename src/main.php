@@ -4,6 +4,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use Aws\Ec2\Ec2Client;
+use Aws\Exception\AwsException;
 
 // Gather disk free space
 $diskFree = disk_free_space("/");
@@ -19,7 +20,7 @@ if ($instanceId !== false) {
     
     if ($region !== false) {
         try {
-            // Create EC2 client
+            // Create EC2 client (credentials provided by IAM instance role)
             $ec2Client = new Ec2Client([
                 'version' => 'latest',
                 'region' => $region
@@ -44,7 +45,7 @@ if ($instanceId !== false) {
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (AwsException $e) {
             // If AWS SDK fails, instance name remains null
             error_log("Failed to describe instance: " . $e->getMessage());
         }
