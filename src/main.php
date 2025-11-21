@@ -7,11 +7,22 @@ use Aws\Ec2\Ec2Client;
 use Aws\CloudWatch\CloudWatchClient;
 use Aws\Exception\AwsException;
 
+// Default sleep duration: 12 hours in seconds
+const DEFAULT_SLEEP_DURATION = 43200;
+
 // Gather disk free space
 $diskFree = disk_free_space("/") / 1024 / 1024 / 1024; // in GB
 
 // Get the region from environment variable or default to us-east-1
 $region = getenv('AWS_REGION') ?: 'us-east-1';
+
+// Get the sleep duration from environment variable or default to 12 hours (43200 seconds)
+$sleepDuration = getenv('SLEEP_DURATION') ?: DEFAULT_SLEEP_DURATION;
+// Validate sleep duration is a non-negative integer
+$sleepDuration = filter_var($sleepDuration, FILTER_VALIDATE_INT);
+if ($sleepDuration === false || $sleepDuration < 0) {
+    $sleepDuration = DEFAULT_SLEEP_DURATION; // Reset to default if invalid
+}
 
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
@@ -97,4 +108,13 @@ if (!empty($instanceName) && $diskFree !== false) {
         $reasons[] = "Unable to get disk free space";
     }
     echo implode(", ", $reasons) . ", skipping CloudWatch metric\n";
+}
+
+// Sleep after reporting
+if ($sleepDuration > 0) {
+    echo "Sleeping for " . $sleepDuration . " seconds...\n";
+    sleep($sleepDuration);
+    echo "Sleep completed, exiting.\n";
+} else {
+    echo "Sleep duration is 0, exiting immediately.\n";
 }
