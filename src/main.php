@@ -8,7 +8,7 @@ use Aws\CloudWatch\CloudWatchClient;
 use Aws\Exception\AwsException;
 
 // Gather disk free space
-$diskFree = disk_free_space("/");
+$diskFree = disk_free_space("/") / 1024 / 1024 / 1024; // in GB
 
 // Get the region from environment variable or default to us-east-1
 $region = getenv('AWS_REGION') ?: 'us-east-1';
@@ -52,7 +52,7 @@ if ($instanceId !== false) {
     }
 }
 
-echo "Disk free: " . ($diskFree / 1024 / 1024 / 1024) . " GB\n";
+echo "Disk free: " . $diskFree . " GB\n";
 echo "EC2 Instance ID: " . ($instanceId ?: 'N/A') . "\n";
 echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 
@@ -72,7 +72,7 @@ if (!empty($instanceName) && $diskFree !== false) {
                 [
                     'MetricName' => 'DiskFreeSpace',
                     'Value' => $diskFree,
-                    'Unit' => 'Bytes',
+                    'Unit' => 'Gigabytes',
                     'Dimensions' => [
                         [
                             'Name' => 'InstanceName',
