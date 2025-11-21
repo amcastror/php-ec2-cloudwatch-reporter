@@ -1,0 +1,1 @@
+{"name":"amcastror/php-ec2-cloudwatch-reporter","description":"Dockerized PHP app to collect host and EC2 info, and report to CloudWatch.","type":"project","require":{"aws/aws-sdk-php":"^3.0"},"autoload":{"psr-4":{"Reporter\\":"src/"}}}
