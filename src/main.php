@@ -4,7 +4,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 // Gather disk free space
-diskFree = disk_free_space("/");
+$diskFree = disk_free_space("/");
 
 // Fetch EC2 instance metadata (instance ID & name)
 // Metadata endpoint available in EC2 only
@@ -15,7 +15,7 @@ if ($instanceId !== false) {
     $instanceName = @file_get_contents($url);
 }
 
-echo "Disk free: $diskFree bytes\n";
+echo "Disk free: " . ($diskFree / 1024 / 1024 / 1024) . " GB\n";
 echo "EC2 Instance ID: " . ($instanceId ?: 'N/A') . "\n";
 echo "EC2 Instance Name: " . ($instanceName ? $instanceName : 'N/A') . "\n";
 
